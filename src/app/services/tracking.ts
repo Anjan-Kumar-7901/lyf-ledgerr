@@ -118,4 +118,19 @@ export class Tracking {
     return summary;
   }
 
+  getYearlySummary() {
+    const summary: any = {};
+
+    for (const day of this.days) {
+      for (const hour of day.hours) {
+        if (hour.category) {
+          summary[hour.category.name] =
+            (summary[hour.category.name] || 0) + 1;
+        }
+      }
+    }
+
+    return summary;
+  }
+
 }

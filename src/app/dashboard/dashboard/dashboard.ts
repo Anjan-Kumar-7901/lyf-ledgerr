@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { Chart } from 'chart.js';
+import Chart from 'chart.js/auto';
 
 import { Tracking } from '../../services/tracking';
 import { HourLog } from '../../models/hour-log.model';
@@ -18,21 +18,29 @@ export class Dashboard {
 
   hours: HourLog[] = [];
   categories: Category[] = [];
+
   selectedHour: HourLog | null = null;
+
   currentDate = '';
+
   dailySummary: any = {};
-  chart: any;
   weeklySummary: any = {};
   monthlySummary: any = {};
 
+  chart: any;
+  chartMode: 'daily' | 'weekly' | 'monthly' = 'daily';
+
+  showChart = false;
 
   constructor(private tracking: Tracking) {
     this.hours = this.tracking.getHours();
     this.categories = this.tracking.getCategories();
     this.currentDate = this.tracking.getCurrentDate();
-    this.dailySummary = this.tracking.getDailySummary();
-    this.renderChart
+
+    this.refreshAnalytics();
   }
+
+  // ---------------- UI ----------------
 
   selectHour(hour: HourLog) {
     this.selectedHour = hour;
@@ -42,24 +50,63 @@ export class Dashboard {
     if (this.selectedHour) {
       this.tracking.assignCategory(this.selectedHour, cat);
       this.selectedHour = null;
-      this.dailySummary = this.tracking.getDailySummary();
-      this.renderChart();
+
+      this.refreshAnalytics();
     }
   }
 
-
   onDateChange(event: any) {
     const date = event.target.value;
+
     this.tracking.changeDay(date);
+
     this.hours = this.tracking.getHours();
     this.currentDate = date;
+
+    this.refreshAnalytics();
+  }
+
+  // ---------------- ANALYTICS ----------------
+
+  refreshAnalytics() {
     this.dailySummary = this.tracking.getDailySummary();
-    this.renderChart();
+    this.weeklySummary = this.tracking.getWeeklySummary();
+    this.monthlySummary = this.tracking.getMonthlySummary(
+      this.currentDate.substring(0, 7)
+    );
+  }
+
+  // ---------------- CHART MODAL ----------------
+
+  openChart(mode: 'daily' | 'weekly' | 'monthly') {
+    this.chartMode = mode;
+    this.showChart = true;
+
+    setTimeout(() => {
+      this.renderChart();
+    }, 0);
+  }
+
+  closeChart() {
+    this.showChart = false;
+    if (this.chart) {
+      this.chart.destroy();
+    }
   }
 
   renderChart() {
-  const labels = Object.keys(this.dailySummary);
-  const values = Object.values(this.dailySummary);
+    let dataSource: any = {};
+
+    if (this.chartMode === 'daily') {
+      dataSource = this.dailySummary;
+    } else if (this.chartMode === 'weekly') {
+      dataSource = this.weeklySummary;
+    } else {
+      dataSource = this.monthlySummary;
+    }
+
+    const labels = Object.keys(dataSource);
+    const values = Object.values(dataSource);
 
     if (this.chart) {
       this.chart.destroy();
@@ -69,22 +116,26 @@ export class Dashboard {
       type: 'pie',
       data: {
         labels,
-        datasets: [{
-          data: values,
-          backgroundColor: labels.map(l =>
-            this.categories.find(c => c.name === l)?.color || '#999'
-          )
-        }]
+        datasets: [
+          {
+            data: values,
+            backgroundColor: labels.map(l =>
+              this.categories.find(c => c.name === l)?.color || '#999'
+            )
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: 'white'
+            }
+          }
+        }
       }
     });
   }
-
-  loadWeekly() {
-   this.weeklySummary = this.tracking.getWeeklySummary();
-  }
-
-  loadMonthly(month: string) {
-   this.monthlySummary = this.tracking.getMonthlySummary(month);
-  }
-
 }

@@ -4,44 +4,37 @@
 
 <input type="date" (change)="onDateChange($event)" />
 
-<!-- DAILY SUMMARY -->
-<div class="summary-panel">
-  <h3>Today's Summary</h3>
-  <div *ngFor="let item of dailySummary | keyvalue">
-    {{ item.key }} : {{ item.value }} hrs
-  </div>
-</div>
+<!-- SUMMARY GRID -->
+<div class="summary-grid">
 
-<!-- ANALYTICS CONTROLS -->
-<div class="analytics-controls">
-  <button (click)="loadWeekly()">Weekly Summary</button>
-  <input type="month" (change)="loadMonthly($event.target.value)" />
-</div>
-
-<!-- WEEKLY SUMMARY -->
-<ng-container *ngIf="weeklySummary | keyvalue as weekly">
-  <div class="analytics-panel" *ngIf="weekly.length">
-    <h3>Weekly Summary</h3>
-    <div *ngFor="let item of weekly">
+  <!-- TODAY -->
+  <div class="summary-card">
+    <h3>Today</h3>
+    <div *ngFor="let item of dailySummary | keyvalue">
       {{ item.key }} : {{ item.value }} hrs
     </div>
+    <button (click)="openChart('daily')">View Chart</button>
   </div>
-</ng-container>
 
-
-<!-- MONTHLY SUMMARY -->
-<ng-container *ngIf="monthlySummary | keyvalue as monthly">
-  <div class="analytics-panel" *ngIf="monthly.length">
-    <h3>Monthly Summary</h3>
-    <div *ngFor="let item of monthly">
+  <!-- WEEKLY -->
+  <div class="summary-card">
+    <h3>Weekly</h3>
+    <div *ngFor="let item of weeklySummary | keyvalue">
       {{ item.key }} : {{ item.value }} hrs
     </div>
+    <button (click)="openChart('weekly')">View Chart</button>
   </div>
-</ng-container>
 
+  <!-- MONTHLY -->
+  <div class="summary-card">
+    <h3>Monthly</h3>
+    <div *ngFor="let item of monthlySummary | keyvalue">
+      {{ item.key }} : {{ item.value }} hrs
+    </div>
+    <button (click)="openChart('monthly')">View Chart</button>
+  </div>
 
-<!-- CHART -->
-<canvas id="dailyChart"></canvas>
+</div>
 
 <!-- HOUR GRID -->
 <div class="hour-grid">
@@ -79,6 +72,19 @@
     <button class="close-btn" (click)="selectedHour = null">
       Cancel
     </button>
+  </div>
+</div>
+
+<!-- CHART MODAL -->
+<div class="modal-backdrop" *ngIf="showChart">
+  <div class="modal chart-modal">
+    <h3>{{ chartMode | titlecase }} Chart</h3>
+
+    <div class="chart-container">
+      <canvas id="dailyChart"></canvas>
+    </div>
+
+    <button class="close-btn" (click)="closeChart()">Close</button>
   </div>
 </div>
 

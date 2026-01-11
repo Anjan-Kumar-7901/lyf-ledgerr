@@ -5,5 +5,10 @@ import { Dashboard } from './dashboard/dashboard/dashboard';
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: Login },
-  { path: 'dashboard', component: Dashboard }
+  { path: 'dashboard', component: Dashboard },
+  {
+    path: 'year-wrapped',
+    loadComponent: () =>
+      import('./year-wrapped/year-wrapped').then((m) => m.yearWrapped),
+  }
 ];

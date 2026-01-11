@@ -1,0 +1,31 @@
+<h1>Lyf Ledgerr — Your Year Wrapped</h1>
+
+<div class="wrapped-card">
+  <h2>Total Hours Logged</h2>
+  <p>{{ totalHours }}</p>
+</div>
+
+<div class="wrapped-card">
+  <h2>Top Category</h2>
+  <p>{{ topCategory }}</p>
+</div>
+
+<div class="wrapped-card">
+  <h2>Average Daily Hours</h2>
+  <p>{{ avgDailyHours }} hrs/day</p>
+</div>
+
+<div class="wrapped-card">
+  <h2>Category Breakdown</h2>
+  <div *ngFor="let item of yearlySummary | keyvalue">
+    {{ item.key }} : {{ item.value }} hrs
+  </div>
+</div>
+
+<div class="chart-container">
+  <canvas #yearCanvas></canvas>
+</div>
+
+
+<button routerLink="/dashboard">Back to Dashboard</button>
+
