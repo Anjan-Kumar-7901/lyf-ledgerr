@@ -1,59 +1,64 @@
-# LyfLedgerr
+# 🎯 Lyf Ledgerr
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.5.
+**Lyf Ledgerr** is a personal life logging and analytics app built with **Angular**.  
+It lets users track every hour of their day, assign categories, and visualize insights over time (daily, weekly, monthly).  
+Designed with a dark, high-contrast interface and a focus on meaningful self-reflection and analytics.
 
-## Development server
+---
 
-To start a local development server, run:
+## 🌟 Features
+
+### 📅 Core Tracking
+- Track every hour of the day with activity categories
+- Multi-day logs with persistent state
+- Date navigation to review past entries
+
+### 📊 Analytics
+- Daily summaries
+- Weekly aggregated summaries
+- Monthly aggregated summaries
+- Data visualization using charts (Chart.js)
+
+### 🎨 UI & Theming
+- Dark, high-contrast “Neon Terminal” theme
+- JetBrains Mono typography for a clean, technical feel
+- Responsive interactive elements
+
+---
+
+## 📂 Project Structure
+
+lyf-ledgerr/
+├── src/
+│ ├── app/
+│ │ ├── dashboard/
+│ │ │ ├── dashboard.ts
+│ │ │ ├── dashboard.html
+│ │ │ ├── dashboard.scss
+│ │ ├── services/
+│ │ │ └── tracking.ts
+│ │ ├── models/
+│ │ │ ├── category.model.ts
+│ │ │ ├── hour-log.model.ts
+│ │ │ └── day-log.model.ts
+│ ├── styles.scss
+├── angular.json
+├── package.json
+└── README.md
+
+---
+
+## 🚀 Getting Started
+
+To run the project locally:
+
+### 🧰 Requirements
+- Node.js (LTS recommended)
+- Angular CLI
+
+---
+
+### 1. Install dependencies
 
 ```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+npm install
