@@ -1,0 +1,85 @@
+<h1>Lyf Ledgerr Dashboard</h1>
+
+<h2>{{ currentDate }}</h2>
+
+<input type="date" (change)="onDateChange($event)" />
+
+<!-- DAILY SUMMARY -->
+<div class="summary-panel">
+  <h3>Today's Summary</h3>
+  <div *ngFor="let item of dailySummary | keyvalue">
+    {{ item.key }} : {{ item.value }} hrs
+  </div>
+</div>
+
+<!-- ANALYTICS CONTROLS -->
+<div class="analytics-controls">
+  <button (click)="loadWeekly()">Weekly Summary</button>
+  <input type="month" (change)="loadMonthly($event.target.value)" />
+</div>
+
+<!-- WEEKLY SUMMARY -->
+<ng-container *ngIf="weeklySummary | keyvalue as weekly">
+  <div class="analytics-panel" *ngIf="weekly.length">
+    <h3>Weekly Summary</h3>
+    <div *ngFor="let item of weekly">
+      {{ item.key }} : {{ item.value }} hrs
+    </div>
+  </div>
+</ng-container>
+
+
+<!-- MONTHLY SUMMARY -->
+<ng-container *ngIf="monthlySummary | keyvalue as monthly">
+  <div class="analytics-panel" *ngIf="monthly.length">
+    <h3>Monthly Summary</h3>
+    <div *ngFor="let item of monthly">
+      {{ item.key }} : {{ item.value }} hrs
+    </div>
+  </div>
+</ng-container>
+
+
+<!-- CHART -->
+<canvas id="dailyChart"></canvas>
+
+<!-- HOUR GRID -->
+<div class="hour-grid">
+  <div
+    class="hour-card"
+    *ngFor="let hour of hours"
+    (click)="selectHour(hour)"
+    [class.active]="hour === selectedHour"
+    [style.background]="hour.category?.color || 'var(--bg-card)'"
+  >
+    {{ hour.time }}
+
+    <div class="category" *ngIf="hour.category">
+      {{ hour.category.name }}
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div class="modal-backdrop" *ngIf="selectedHour">
+  <div class="modal">
+    <h3>Select Category for {{ selectedHour.time }}</h3>
+
+    <div class="category-list">
+      <button
+        *ngFor="let cat of categories"
+        (click)="assignCategory(cat)"
+        [style.background]="cat.color"
+        class="category-btn"
+      >
+        {{ cat.name }}
+      </button>
+    </div>
+
+    <button class="close-btn" (click)="selectedHour = null">
+      Cancel
+    </button>
+  </div>
+</div>
+
+<button routerLink="/login">Logout</button>

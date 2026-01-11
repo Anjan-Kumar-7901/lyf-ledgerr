@@ -1,1 +1,23 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  /* Neon Terminal Theme */
+  --bg-main: #050505;
+  --bg-card: #111111;
+  --border-color: #1f1f1f;
+
+  --text-primary: #e0e0e0;
+  --text-secondary: #9e9e9e;
+
+  --glow-white: rgba(255, 255, 255, 0.6);
+
+  --neon-cyan: #00fff5;
+  --neon-pink: #ff2fdc;
+  --neon-green: #39ff14;
+  --neon-orange: #ff9f1c;
+}
+
+body {
+  margin: 0;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg-main);
+  color: var(--text-primary);
+}
