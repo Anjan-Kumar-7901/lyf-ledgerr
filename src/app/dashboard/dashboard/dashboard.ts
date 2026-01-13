@@ -21,18 +21,36 @@ export class Dashboard {
 
   selectedHour: HourLog | null = null;
 
+  currentStreak = 0;
+  longestStreak = 0;
+
   currentDate = '';
 
+  categoryTrend: any[] = [];
+  dailyTotal = 0;
   dailySummary: any = {};
+  weeklyTotal = 0;
   weeklySummary: any = {};
+  monthlyTotal = 0;
   monthlySummary: any = {};
-
+  topDailyCategory = '';
+  topWeeklyCategory = '';
+  topMonthlyCategory = '';
   chart: any;
   chartMode: 'daily' | 'weekly' | 'monthly' = 'daily';
+  monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  yearGrid: { date: string; total: number }[] = [];
 
   showChart = false;
 
   constructor(private tracking: Tracking) {
+    this.init();
+  }
+
+  // ---------------- INIT ----------------
+
+  init() {
     this.hours = this.tracking.getHours();
     this.categories = this.tracking.getCategories();
     this.currentDate = this.tracking.getCurrentDate();
@@ -50,20 +68,20 @@ export class Dashboard {
     if (this.selectedHour) {
       this.tracking.assignCategory(this.selectedHour, cat);
       this.selectedHour = null;
-
       this.refreshAnalytics();
     }
+  }
+
+  loadTrend(category: string) {
+    if (!category) return;
+    this.categoryTrend = this.tracking.getCategoryTrend(category);
   }
 
   onDateChange(event: any) {
     const date = event.target.value;
 
     this.tracking.changeDay(date);
-
-    this.hours = this.tracking.getHours();
-    this.currentDate = date;
-
-    this.refreshAnalytics();
+    this.init();
   }
 
   // ---------------- ANALYTICS ----------------
@@ -74,6 +92,34 @@ export class Dashboard {
     this.monthlySummary = this.tracking.getMonthlySummary(
       this.currentDate.substring(0, 7)
     );
+
+  // Total hours
+    const values = Object.values(this.dailySummary) as number[];
+    this.dailyTotal = values.reduce((a, b) => a + b, 0);
+
+  // Top category
+    const sorted = Object.entries(this.dailySummary) as [string, number][];
+    sorted.sort((a, b) => b[1] - a[1]);
+    this.topDailyCategory = sorted.length ? sorted[0][0] : '';
+
+    // Weekly
+    const weeklyValues = Object.values(this.weeklySummary) as number[];
+    this.weeklyTotal = weeklyValues.reduce((a, b) => a + b, 0);
+
+    const weeklySorted = Object.entries(this.weeklySummary) as [string, number][];
+    weeklySorted.sort((a, b) => b[1] - a[1]);
+    this.topWeeklyCategory = weeklySorted.length ? weeklySorted[0][0] : '';
+
+    // Monthly
+    const monthlyValues = Object.values(this.monthlySummary) as number[];
+    this.monthlyTotal = monthlyValues.reduce((a, b) => a + b, 0);
+
+    const monthlySorted = Object.entries(this.monthlySummary) as [string, number][];
+    monthlySorted.sort((a, b) => b[1] - a[1]);
+    this.topMonthlyCategory = monthlySorted.length ? monthlySorted[0][0] : '';
+
+    this.calculateStreak();
+    this.generateYearGrid();
   }
 
   // ---------------- CHART MODAL ----------------
@@ -89,9 +135,77 @@ export class Dashboard {
 
   closeChart() {
     this.showChart = false;
+
     if (this.chart) {
       this.chart.destroy();
+      this.chart = null;
     }
+  }
+
+  calculateStreak() {
+    const days = this.tracking.getAllDays();
+
+    if (!days || days.length === 0) {
+      this.currentStreak = 0;
+      this.longestStreak = 0;
+      return;
+    }
+
+    let streak = 0;
+    let longest = 0;
+
+    const sorted = [...days].sort((a, b) =>
+      a.date.localeCompare(b.date)
+    );
+
+    for (const day of sorted) {
+      const hasData = day.hours.some(h => h.category !== null);
+
+      if (hasData) {
+        streak++;
+        longest = Math.max(longest, streak);
+      } else {
+        streak = 0;
+      }
+    }
+
+    this.currentStreak = streak;
+    this.longestStreak = longest;
+  }
+
+  generateYearGrid() {
+    const days = this.tracking.getAllDays();
+
+    const map = new Map<string, number>();
+
+    for (const day of days) {
+      const total = day.hours.filter(h => h.category).length;
+      map.set(day.date, total);
+    }
+
+    const year = new Date().getFullYear();
+    const start = new Date(year, 0, 1);
+    const end = new Date(year, 11, 31);
+
+    const grid: any[] = [];
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().split('T')[0];
+
+      grid.push({
+        date: key,
+        total: map.get(key) || 0
+      });
+    }
+
+    this.yearGrid = grid;
+  }
+
+  jumpToDate(date: string) {
+    this.tracking.changeDay(date);
+    this.currentDate = date;
+    this.hours = this.tracking.getHours();
+    this.refreshAnalytics();
   }
 
   renderChart() {

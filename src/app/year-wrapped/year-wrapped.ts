@@ -1,87 +1,96 @@
-import { Component, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import Chart from 'chart.js/auto';
 import { Tracking } from '../services/tracking';
+import html2canvas  from 'html2canvas';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-year-wrapped',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './year-wrapped.html',
   styleUrl: './year-wrapped.scss'
 })
-export class yearWrapped implements AfterViewInit {
-
-  @ViewChild('yearCanvas') yearCanvas!: ElementRef<HTMLCanvasElement>;
+export class yearWrapped implements OnInit {
 
   yearlySummary: any = {};
   totalHours = 0;
   topCategory = '';
   avgDailyHours = 0;
+  bestDay = '';
+  bestDayHours = 0;
+  productivityScore = 0;
 
-  chart: any;
 
-  constructor(private tracking: Tracking) {
+
+  constructor(private tracking: Tracking) {}
+
+  ngOnInit() {
     this.generateYearWrapped();
   }
 
-  ngAfterViewInit() {
-    this.renderChart();
-  }
+  exportImage() {
+  const element = document.getElementById('wrappedCapture');
+
+  if (!element) return;
+
+  html2canvas(element).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'Lyf-Ledgerr-Year-Wrapped.png';
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+}
 
   generateYearWrapped() {
-    const data = this.tracking.getYearlySummary() as Record<string, number>;
+    const yearly = this.tracking.getYearlySummary() as Record<string, number>;
 
-    this.yearlySummary = data;
+    this.yearlySummary = yearly;
 
-    this.totalHours = Object.values(data).reduce(
+    // ---- TOTAL HOURS ----
+    this.totalHours = Object.values(yearly).reduce(
       (a: number, b: number) => a + b,
       0
     );
 
-    const sorted = Object.entries(data).sort(
-      (a: [string, number], b: [string, number]) => b[1] - a[1]
+    // ---- TOP CATEGORY ----
+    const sorted = Object.entries(yearly).sort(
+      (a, b) => b[1] - a[1]
     );
 
-    this.topCategory = sorted[0]?.[0] || '';
+    this.topCategory = sorted.length ? sorted[0][0] : '';
 
-    this.avgDailyHours = Math.round(this.totalHours / 365);
-  }
+    // ---- AVERAGE DAILY HOURS ----
+    const days: any[] = (this.tracking as any).days || [];
 
-  renderChart() {
-    const data = this.tracking.getYearlySummary() as Record<string, number>;
-
-    const labels = Object.keys(data);
-    const values = Object.values(data);
-
-    if (!labels.length) return;
-
-    if (this.chart) {
-      this.chart.destroy();
+    for (const d of days) {
+      const count = d.hours.filter((h: any) => h.category).length;
+      if (count > this.bestDayHours) {
+        this.bestDayHours = count;
+        this.bestDay = d.date;
+      }
     }
 
-    this.chart = new Chart(this.yearCanvas.nativeElement, {
-      type: 'pie',
-      data: {
-        labels,
-        datasets: [
-          {
-            data: values,
-            backgroundColor: labels.map(l =>
-              this.tracking.getCategories().find(c => c.name === l)?.color || '#888'
-            )
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            labels: { color: 'white' }
-          }
-        }
+    const daysWithData = days.filter(d =>
+      d.hours.some((h: any) => h.category)
+    ).length;
+
+    this.avgDailyHours = daysWithData
+      ? Math.round(this.totalHours / daysWithData)
+      : 0;
+
+    const productiveCategories = ['Work', 'Exercise'];
+
+    let productiveHours = 0;
+
+    for (const [key, value] of Object.entries(yearly)) {
+      if (productiveCategories.includes(key)) {
+        productiveHours += value;
       }
-    });
+    }
+
+    this.productivityScore = this.totalHours
+      ? Math.round((productiveHours / this.totalHours) * 100)
+      : 0;
   }
 }

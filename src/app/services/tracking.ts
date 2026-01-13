@@ -8,115 +8,145 @@ import { DayLog } from '../models/day-log.model';
 })
 export class Tracking {
 
+  private days: DayLog[] = [];
+  private currentDate = this.getToday();
+
   private categories: Category[] = [
-    { name: 'Sleep', color: '#a371f7' },
-    { name: 'Work', color: '#00fff5' },
+    { name: 'Sleep', color: '#9b6cff' },
+    { name: 'Work', color: '#00ffff' },
     { name: 'Exercise', color: '#39ff14' },
-    { name: 'Leisure', color: '#ff2fdc' },
-    { name: 'Family', color: '#ff9f1c' }
+    { name: 'Family', color: '#ffa500' },
+    { name: 'Leisure', color: '#ff3cff' }
   ];
 
-  private days: DayLog[] = [];
-  private currentDay!: DayLog;
-
   constructor() {
-    this.createToday();
+    this.loadDay(this.currentDate);
   }
 
-  private createToday() {
-    const today = new Date().toISOString().split('T')[0];
-    this.createDay(today);
+  // ----------------------
+  // BASIC HELPERS
+  // ----------------------
+
+  private getToday(): string {
+    return new Date().toISOString().split('T')[0];
   }
 
-  private createDay(date: string) {
-    const hours: HourLog[] = [];
+  private generateEmptyHours(): HourLog[] {
+    return Array.from({ length: 24 }, (_, i) => ({
+      time: i.toString().padStart(2, '0') + ':00',
+      category: null
+    }));
+  }
 
-    for (let i = 0; i < 24; i++) {
-      const hour = i.toString().padStart(2, '0') + ':00';
-      hours.push({
-        time: hour,
-        category: null
-      });
+  // ----------------------
+  // DAY MANAGEMENT
+  // ----------------------
+
+  private loadDay(date: string) {
+    let day = this.days.find(d => d.date === date);
+
+    if (!day) {
+      day = {
+        date,
+        hours: this.generateEmptyHours()
+      };
+      this.days.push(day);
     }
 
-    const day: DayLog = {
-      date,
-      hours
-    };
-
-    this.days.push(day);
-    this.currentDay = day;
-  }
-
-  getHours(): HourLog[] {
-    return this.currentDay.hours;
-  }
-
-  getCategories(): Category[] {
-    return this.categories;
-  }
-
-  getCurrentDate(): string {
-    return this.currentDay.date;
+    this.currentDate = date;
   }
 
   changeDay(date: string) {
-    const existing = this.days.find(d => d.date === date);
+    this.loadDay(date);
+  }
 
-    if (existing) {
-      this.currentDay = existing;
-    } else {
-      this.createDay(date);
-    }
+  getCurrentDate(): string {
+    return this.currentDate;
+  }
+
+  getHours(): HourLog[] {
+    return this.days.find(d => d.date === this.currentDate)?.hours || [];
+  }
+
+  getAllDays() {
+    return this.days;
+  }
+
+  // ----------------------
+  // CATEGORY
+  // ----------------------
+
+  getCategories(): Category[] {
+    return this.categories;
   }
 
   assignCategory(hour: HourLog, category: Category) {
     hour.category = category;
   }
 
-  getDailySummary() {
-    const summary: { [key: string]: number } = {};
+  // ----------------------
+  // DAILY ANALYTICS
+  // ----------------------
 
-    this.currentDay.hours.forEach(h => {
-      if (h.category) {
-        const name = h.category.name;
-        summary[name] = (summary[name] || 0) + 1;
+  getDailySummary() {
+    const summary: any = {};
+    const day = this.days.find(d => d.date === this.currentDate);
+
+    if (!day) return summary;
+
+    for (const hour of day.hours) {
+      if (hour.category) {
+        summary[hour.category.name] =
+          (summary[hour.category.name] || 0) + 1;
       }
-    });
+    }
 
     return summary;
   }
+
+  // ----------------------
+  // WEEKLY ANALYTICS
+  // ----------------------
 
   getWeeklySummary() {
-    const summary: { [key: string]: number } = {};
+    const summary: any = {};
 
-    this.days.forEach(day => {
-      day.hours.forEach(h => {
-        if (h.category) {
-          const name = h.category.name;
-          summary[name] = (summary[name] || 0) + 1;
+    for (const day of this.days) {
+      for (const hour of day.hours) {
+        if (hour.category) {
+          summary[hour.category.name] =
+            (summary[hour.category.name] || 0) + 1;
         }
-      });
-    });
+      }
+    }
 
     return summary;
   }
+
+  // ----------------------
+  // MONTHLY ANALYTICS
+  // ----------------------
 
   getMonthlySummary(month: string) {
-    const summary: { [key: string]: number } = {};
+    const summary: any = {};
 
-    this.days
-      .filter(d => d.date.startsWith(month))
-      .forEach(day => {
-        day.hours.forEach(h => {
-          if (h.category) {
-            const name = h.category.name;
-            summary[name] = (summary[name] || 0) + 1;
-          }
-        });
-      });
+    for (const day of this.days) {
+      if (!day.date.startsWith(month)) continue;
+
+      for (const hour of day.hours) {
+        if (hour.category) {
+          summary[hour.category.name] =
+            (summary[hour.category.name] || 0) + 1;
+        }
+      }
+    }
+
     return summary;
   }
+
+  // ----------------------
+  // YEARLY ANALYTICS
+  // ----------------------
 
   getYearlySummary() {
     const summary: any = {};
@@ -133,4 +163,28 @@ export class Tracking {
     return summary;
   }
 
+  // ----------------------
+  // CATEGORY TREND
+  // ----------------------
+
+  getCategoryTrend(category: string) {
+    const trend: any[] = [];
+
+    for (const day of this.days) {
+      let count = 0;
+
+      for (const hour of day.hours) {
+        if (hour.category?.name === category) {
+          count++;
+        }
+      }
+
+      trend.push({
+        date: day.date,
+        hours: count
+      });
+    }
+
+    return trend;
+  }
 }

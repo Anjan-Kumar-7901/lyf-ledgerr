@@ -1,61 +1,170 @@
-<h1>Lyf Ledgerr Dashboard</h1>
+<div class="dashboard-container">
 
-<h2>{{ currentDate }}</h2>
+  <!-- HEADER -->
+  <div class="dashboard-header">
+    <h1 class="dashboard-title">Lyf Ledgerr Dashboard</h1>
 
-<input type="date" (change)="onDateChange($event)" />
+    <div class="date-row">
+      <span class="today-date">{{ currentDate }}</span>
 
-<!-- SUMMARY GRID -->
-<div class="summary-grid">
+      <input
+        type="date"
+        class="date-picker"
+        [value]="currentDate"
+        (change)="onDateChange($event)"
+      />
+    </div>
+  </div>
 
-  <!-- TODAY -->
-  <div class="summary-card">
+  <!-- YEAR WRAPPED BUTTON -->
+  <div class="year-btn-wrapper">
+    <button class="primary-btn" routerLink="/year-wrapped">
+      View Year Wrapped
+    </button>
+  </div>
+
+  <!--STREAK-->
+  <div class="streak-bar">
+
+    <div class="streak-item">
+      🔥 Current Streak: <span>{{ currentStreak }}</span> days
+    </div>
+
+    <div class="streak-item best">
+      ⭐ Best Streak: <span>{{ longestStreak }}</span> days
+    </div>
+
+  </div>
+
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-grid">
+
+  <div class="summary-card highlight-card">
     <h3>Today</h3>
-    <div *ngFor="let item of dailySummary | keyvalue">
+
+    <div class="big-number">{{ dailyTotal }} hrs</div>
+
+    <div class="top-cat" *ngIf="topDailyCategory">
+      Top: {{ topDailyCategory }}
+    </div>
+
+    <div class="summary-item" *ngFor="let item of dailySummary | keyvalue">
       {{ item.key }} : {{ item.value }} hrs
     </div>
+
     <button (click)="openChart('daily')">View Chart</button>
   </div>
 
-  <!-- WEEKLY -->
+
+
   <div class="summary-card">
     <h3>Weekly</h3>
-    <div *ngFor="let item of weeklySummary | keyvalue">
+
+    <div class="big-number">{{ weeklyTotal }} hrs</div>
+
+    <div class="top-cat" *ngIf="topWeeklyCategory">
+      Top: {{ topWeeklyCategory }}
+    </div>
+
+    <div class="summary-item" *ngFor="let item of weeklySummary | keyvalue">
       {{ item.key }} : {{ item.value }} hrs
     </div>
+
     <button (click)="openChart('weekly')">View Chart</button>
   </div>
 
-  <!-- MONTHLY -->
+
+
   <div class="summary-card">
     <h3>Monthly</h3>
-    <div *ngFor="let item of monthlySummary | keyvalue">
+
+    <div class="big-number">{{ monthlyTotal }} hrs</div>
+
+    <div class="top-cat" *ngIf="topMonthlyCategory">
+      Top: {{ topMonthlyCategory }}
+    </div>
+
+    <div class="summary-item" *ngFor="let item of monthlySummary | keyvalue">
       {{ item.key }} : {{ item.value }} hrs
     </div>
+
     <button (click)="openChart('monthly')">View Chart</button>
   </div>
 
-</div>
 
-<!-- HOUR GRID -->
-<div class="hour-grid">
-  <div
-    class="hour-card"
-    *ngFor="let hour of hours"
-    (click)="selectHour(hour)"
-    [class.active]="hour === selectedHour"
-    [style.background]="hour.category?.color || 'var(--bg-card)'"
-  >
-    {{ hour.time }}
 
-    <div class="category" *ngIf="hour.category">
-      {{ hour.category.name }}
+  </div>
+
+  <!-- HOUR GRID -->
+  <div class="hour-grid">
+    <div
+      *ngFor="let hour of hours"
+      class="hour-card"
+      (click)="selectHour(hour)"
+      [style.background]="hour.category?.color || ''"
+    >
+      <div class="hour-time">{{ hour.time }}</div>
+      <div class="hour-category" *ngIf="hour.category">
+        {{ hour.category.name }}
+      </div>
     </div>
   </div>
-</div>
 
-<!-- CATEGORY MODAL -->
-<div class="modal-backdrop" *ngIf="selectedHour">
-  <div class="modal">
+
+
+  <br><br>
+
+  <!-- STREAK MAP -->
+  <div class="heatmap-wrapper">
+    <h3 class="heatmap-title">Your Year in Pixels</h3>
+
+    <div class="month-row">
+      <span *ngFor="let m of monthLabels">{{ m }}</span>
+    </div>
+
+    <div class="heatmap">
+      <div
+        class="heat-cell"
+        *ngFor="let d of yearGrid; let i = index"
+        (click)="jumpToDate(d.date)"
+        [class.selected]="d.date === currentDate"
+        [ngClass]="{
+          'lvl-0': d.total === 0,
+          'lvl-1': d.total > 0 && d.total <= 2,
+          'lvl-2': d.total > 2 && d.total <= 5,
+          'lvl-3': d.total > 5
+        }"
+        [style.animationDelay]="(i * 3) + 'ms'"
+        title="{{ d.date }} : {{ d.total }} hrs"
+      ></div>
+    </div>
+
+    <div class="heatmap-legend">
+      <span>Less</span>
+      <div class="heat-cell lvl-0"></div>
+      <div class="heat-cell lvl-1"></div>
+      <div class="heat-cell lvl-2"></div>
+      <div class="heat-cell lvl-3"></div>
+      <span>More</span>
+    </div>
+  </div>
+
+
+
+  <!-- CHART MODAL -->
+  <div class="chart-modal" *ngIf="showChart">
+    <div class="chart-box">
+      <button class="close-btn" (click)="closeChart()">✕</button>
+      <canvas id="dailyChart"></canvas>
+    </div>
+  </div>
+
+  <!-- CATEGORY MODAL -->
+<div class="chart-modal" *ngIf="selectedHour">
+
+  <div class="chart-box">
+
     <h3>Select Category for {{ selectedHour.time }}</h3>
 
     <div class="category-list">
@@ -63,29 +172,16 @@
         *ngFor="let cat of categories"
         (click)="assignCategory(cat)"
         [style.background]="cat.color"
-        class="category-btn"
-      >
+        class="category-btn">
         {{ cat.name }}
       </button>
     </div>
 
-    <button class="close-btn" (click)="selectedHour = null">
-      Cancel
-    </button>
+    <button class="close-btn" (click)="selectedHour = null">✕</button>
+
   </div>
+
 </div>
 
-<!-- CHART MODAL -->
-<div class="modal-backdrop" *ngIf="showChart">
-  <div class="modal chart-modal">
-    <h3>{{ chartMode | titlecase }} Chart</h3>
 
-    <div class="chart-container">
-      <canvas id="dailyChart"></canvas>
-    </div>
-
-    <button class="close-btn" (click)="closeChart()">Close</button>
-  </div>
 </div>
-
-<button routerLink="/login">Logout</button>
