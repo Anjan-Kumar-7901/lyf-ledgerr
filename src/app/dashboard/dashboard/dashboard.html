@@ -14,6 +14,9 @@
         (change)="onDateChange($event)"
       />
     </div>
+
+    <button class="logout-btn" (click)="logout()">Logout</button>
+
   </div>
 
   <!-- YEAR WRAPPED BUTTON -->
@@ -96,8 +99,11 @@
 
   </div>
 
+
+
+
   <!-- HOUR GRID -->
-  <div class="hour-grid">
+  <div class="hour-grid"  #hourGrid>
     <div
       *ngFor="let hour of hours"
       class="hour-card"
@@ -120,13 +126,20 @@
     <h3 class="heatmap-title">Your Year in Pixels</h3>
 
     <div class="month-row">
-      <span *ngFor="let m of monthLabels">{{ m }}</span>
+      <span
+      *ngFor="let m of monthPositions"
+      [style.gridColumnStart]="m.index + 1"
+      >
+        {{ m.name }}
+      </span>
     </div>
 
     <div class="heatmap">
       <div
         class="heat-cell"
         *ngFor="let d of yearGrid; let i = index"
+        (mouseenter)="showTooltip($event, d)"
+        (mouseleave)="hideTooltip()"
         (click)="jumpToDate(d.date)"
         [class.selected]="d.date === currentDate"
         [ngClass]="{
@@ -139,6 +152,18 @@
         title="{{ d.date }} : {{ d.total }} hrs"
       ></div>
     </div>
+
+
+    <div
+      class="heat-tooltip"
+      *ngIf="tooltipVisible"
+      [style.top.px]="tooltipY"
+      [style.left.px]="tooltipX"
+    >
+      <div>{{ tooltipDate }}</div>
+      <div>{{ tooltipHours }} hrs logged</div>
+    </div>
+
 
     <div class="heatmap-legend">
       <span>Less</span>

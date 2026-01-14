@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import Chart from 'chart.js/auto';
 
 import { Tracking } from '../../services/tracking';
 import { HourLog } from '../../models/hour-log.model';
 import { Category } from '../../models/category.model';
+import { ViewChild, ElementRef } from '@angular/core';
 
 @Component({
   selector: 'app-dashboard',
@@ -39,12 +40,28 @@ export class Dashboard {
   chart: any;
   chartMode: 'daily' | 'weekly' | 'monthly' = 'daily';
   monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  monthPositions: { name: string; index: number }[] = [];
+
+  selectedTrendCategory = '';
+  weeklyChart: any;
+
+  tooltipVisible = false;
+  tooltipX = 0;
+  tooltipY = 0;
+  tooltipDate = '';
+  tooltipHours = 0;
 
   yearGrid: { date: string; total: number }[] = [];
 
+  @ViewChild('hourGrid') hourGrid!: ElementRef;
+
+
   showChart = false;
 
-  constructor(private tracking: Tracking) {
+  constructor(
+    private tracking: Tracking,
+    private router: Router
+  ) {
     this.init();
   }
 
@@ -83,6 +100,35 @@ export class Dashboard {
     this.tracking.changeDay(date);
     this.init();
   }
+
+  generateMonthPositions() {
+    this.monthPositions = [];
+
+    let lastMonth = -1;
+
+    this.yearGrid.forEach((d, i) => {
+      const dateObj = new Date(d.date);
+
+      if (dateObj.getFullYear() !== new Date().getFullYear()) return;
+
+      const m = dateObj.getMonth();
+
+      if (m !== lastMonth) {
+        this.monthPositions.push({
+          name: dateObj.toLocaleString('default', { month: 'short' }),
+          index: i
+        });
+        lastMonth = m;
+      }
+    });
+  }
+
+  logout() {
+    localStorage.removeItem('lyf_logged');
+    this.router.navigate(['/login']);
+  }
+
+
 
   // ---------------- ANALYTICS ----------------
 
@@ -199,6 +245,7 @@ export class Dashboard {
     }
 
     this.yearGrid = grid;
+    this.generateMonthPositions();
   }
 
   jumpToDate(date: string) {
@@ -206,7 +253,27 @@ export class Dashboard {
     this.currentDate = date;
     this.hours = this.tracking.getHours();
     this.refreshAnalytics();
+
+    setTimeout(() => {
+      this.hourGrid.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 100);
   }
+
+  showTooltip(event: MouseEvent, d: any) {
+    this.tooltipVisible = true;
+    this.tooltipX = event.pageX + 10;
+    this.tooltipY = event.pageY + 10;
+    this.tooltipDate = d.date;
+    this.tooltipHours = d.total;
+  }
+
+  hideTooltip() {
+    this.tooltipVisible = false;
+  }
+
 
   renderChart() {
     let dataSource: any = {};

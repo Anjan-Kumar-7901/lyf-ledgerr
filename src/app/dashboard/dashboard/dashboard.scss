@@ -214,11 +214,11 @@ button:hover {
 
 .month-row {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
+  grid-template-columns: repeat(53, 1fr);
+  gap: 4px;
   font-size: 11px;
   color: #777;
   margin-bottom: 6px;
-  text-align: center;
 }
 
 .heatmap {
@@ -252,6 +252,19 @@ button:hover {
   outline: 2px solid #fff;
   box-shadow: 0 0 8px #9b6cff;
   transform: scale(1.3);
+}
+
+.heat-tooltip {
+  position: absolute;
+  background: #000;
+  border: 1px solid #9b6cff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #9b6cff;
+  pointer-events: none;
+  box-shadow: 0 0 10px #9b6cff;
+  z-index: 9999;
 }
 
 

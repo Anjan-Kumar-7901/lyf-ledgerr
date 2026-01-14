@@ -1,5 +1,43 @@
-<h1>Lyf Ledgerr Login</h1>
+<div class="login-wrapper">
 
-<button routerLink="/dashboard">
-  Login
-</button>
+  <h1 class="title">Lyf Ledgerr</h1>
+  <p class="subtitle">Your Life, Logged</p>
+
+  <div class="login-card">
+
+    <input
+      type="email"
+      placeholder="Email"
+      [(ngModel)]="email"
+    />
+
+    <div class="password-box">
+    <input
+      [type]="showPassword ? 'text' : 'password'"
+      placeholder="Password"
+      [(ngModel)]="password"
+    />
+
+    <span class="toggle" (click)="showPassword = !showPassword">
+      {{ showPassword ? 'Hide' : 'Show' }}
+    </span>
+
+    <p class="forgot" (click)="error='Forgot password coming soon 😉'">
+      Forgot password?
+    </p>
+
+  </div>
+
+
+  <button (click)="login()" [disabled]="loading">
+    <span *ngIf="!loading">Login</span>
+    <span *ngIf="loading" class="loader"></span>
+  </button>
+
+
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+
+  </div>
+
+</div>
