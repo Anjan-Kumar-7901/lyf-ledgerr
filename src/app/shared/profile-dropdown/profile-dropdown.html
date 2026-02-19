@@ -1,0 +1,18 @@
+<div class="profile-card">
+  <div class="user-info">
+    <div class="avatar">
+      {{ userName[0] }}
+    </div>
+
+    <div class="details">
+      <div class="name">{{ userName }}</div>
+      <div class="email">{{ email }}</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <button (click)="goToProfile()">Profile</button>
+  <button (click)="goToSettings()">Settings</button>
+  <button class="logout" (click)="logout()">Logout</button>
+</div>

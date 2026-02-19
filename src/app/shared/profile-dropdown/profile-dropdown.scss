@@ -1,0 +1,63 @@
+.profile-card {
+  width: 260px;
+  background: #1b1b1f;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 0 20px rgba(160, 90, 255, 0.25);
+  border: 1px solid rgba(160, 90, 255, 0.3);
+  color: #fff;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9f7aea, #6b46c1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.details {
+  .name {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .email {
+    font-size: 12px;
+    opacity: 0.7;
+  }
+}
+
+.divider {
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+  margin: 10px 0;
+}
+
+button {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 8px;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+
+  &:hover {
+    background: rgba(160, 90, 255, 0.15);
+  }
+}
+
+.logout {
+  color: #ff6b6b;
+}

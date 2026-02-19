@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import Chart from 'chart.js/auto';
@@ -6,12 +6,13 @@ import Chart from 'chart.js/auto';
 import { Tracking } from '../../services/tracking';
 import { HourLog } from '../../models/hour-log.model';
 import { Category } from '../../models/category.model';
-import { ViewChild, ElementRef } from '@angular/core';
+import { DayLog } from '../../models/day-log.model';
+import { ProfileDropdown } from '../../shared/profile-dropdown/profile-dropdown';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ProfileDropdown],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -22,28 +23,37 @@ export class Dashboard {
 
   selectedHour: HourLog | null = null;
 
-  currentStreak = 0;
-  longestStreak = 0;
-
   currentDate = '';
 
-  categoryTrend: any[] = [];
+  // ----------- SUMMARY DATA -----------
+  dailySummary: Record<string, number> = {};
+  weeklySummary: Record<string, number> = {};
+  monthlySummary: Record<string, number> = {};
+
   dailyTotal = 0;
-  dailySummary: any = {};
   weeklyTotal = 0;
-  weeklySummary: any = {};
   monthlyTotal = 0;
-  monthlySummary: any = {};
+
   topDailyCategory = '';
   topWeeklyCategory = '';
   topMonthlyCategory = '';
-  chart: any;
-  chartMode: 'daily' | 'weekly' | 'monthly' = 'daily';
-  monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  totalHours = 0;
+
+  // ----------- STREAK -----------
+  currentStreak = 0;
+  longestStreak = 0;
+
+  // ----------- YEAR GRID / HEATMAP -----------
+  yearGrid: { date: string; total: number }[] = [];
   monthPositions: { name: string; index: number }[] = [];
 
-  selectedTrendCategory = '';
-  weeklyChart: any;
+  // ----------- UI STATE -----------
+  chart: Chart | null = null;
+  chartMode: 'daily' | 'weekly' | 'monthly' = 'daily';
+  showChart = false;
+
+  showProfile = false;
 
   tooltipVisible = false;
   tooltipX = 0;
@@ -51,12 +61,7 @@ export class Dashboard {
   tooltipDate = '';
   tooltipHours = 0;
 
-  yearGrid: { date: string; total: number }[] = [];
-
   @ViewChild('hourGrid') hourGrid!: ElementRef;
-
-
-  showChart = false;
 
   constructor(
     private tracking: Tracking,
@@ -71,7 +76,6 @@ export class Dashboard {
     this.hours = this.tracking.getHours();
     this.categories = this.tracking.getCategories();
     this.currentDate = this.tracking.getCurrentDate();
-
     this.refreshAnalytics();
   }
 
@@ -82,35 +86,111 @@ export class Dashboard {
   }
 
   assignCategory(cat: Category) {
-    if (this.selectedHour) {
-      this.tracking.assignCategory(this.selectedHour, cat);
-      this.selectedHour = null;
-      this.refreshAnalytics();
-    }
+    if (!this.selectedHour) return;
+
+    this.tracking.assignCategory(this.selectedHour, cat);
+    this.selectedHour = null;
+    this.refreshAnalytics();
   }
 
-  loadTrend(category: string) {
-    if (!category) return;
-    this.categoryTrend = this.tracking.getCategoryTrend(category);
-  }
+  onDateChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.value) return;
 
-  onDateChange(event: any) {
-    const date = event.target.value;
-
-    this.tracking.changeDay(date);
+    this.tracking.changeDay(input.value);
     this.init();
+  }
+
+  toggleProfile() {
+    this.showProfile = !this.showProfile;
+  }
+
+  logout() {
+    localStorage.removeItem('lyf_logged');
+    this.router.navigate(['/login']);
+  }
+
+  // ---------------- ANALYTICS ----------------
+
+  refreshAnalytics() {
+    this.dailySummary = this.tracking.getDailySummary();
+    this.weeklySummary = this.tracking.getWeeklySummary();
+    this.monthlySummary = this.tracking.getMonthlySummary(
+      this.currentDate.substring(0, 7)
+    );
+
+    // Daily
+    this.dailyTotal = Object.values(this.dailySummary)
+      .reduce((a, b) => a + Number(b), 0);
+
+    this.topDailyCategory = this.getTopCategory(this.dailySummary);
+
+    // Weekly
+    this.weeklyTotal = Object.values(this.weeklySummary)
+      .reduce((a, b) => a + Number(b), 0);
+
+    this.topWeeklyCategory = this.getTopCategory(this.weeklySummary);
+
+    // Monthly
+    this.monthlyTotal = Object.values(this.monthlySummary)
+      .reduce((a, b) => a + Number(b), 0);
+
+    this.topMonthlyCategory = this.getTopCategory(this.monthlySummary);
+
+    // Year
+    const yearly = this.tracking.getYearlySummary();
+    this.totalHours = Object.values(yearly)
+      .reduce((a, b) => a + Number(b), 0);
+
+    const streak = this.tracking.getStreakData();
+    this.currentStreak = streak.current;
+    this.longestStreak = streak.max;
+
+    this.generateYearGrid();
+  }
+
+  private getTopCategory(summary: Record<string, number>): string {
+    const entries = Object.entries(summary);
+    if (!entries.length) return '';
+    entries.sort((a, b) => b[1] - a[1]);
+    return entries[0][0];
+  }
+
+  // ---------------- YEAR GRID ----------------
+
+  generateYearGrid() {
+    const days: DayLog[] = this.tracking.getDays();
+    const map = new Map<string, number>();
+
+    for (const day of days) {
+      const total = day.hours.filter((h: HourLog) => h.category !== null).length;
+      map.set(day.date, total);
+    }
+
+    const year = new Date().getFullYear();
+    const start = new Date(year, 0, 1);
+    const end = new Date(year, 11, 31);
+
+    const grid: { date: string; total: number }[] = [];
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().split('T')[0];
+      grid.push({
+        date: key,
+        total: map.get(key) || 0
+      });
+    }
+
+    this.yearGrid = grid;
+    this.generateMonthPositions();
   }
 
   generateMonthPositions() {
     this.monthPositions = [];
-
     let lastMonth = -1;
 
     this.yearGrid.forEach((d, i) => {
       const dateObj = new Date(d.date);
-
-      if (dateObj.getFullYear() !== new Date().getFullYear()) return;
-
       const m = dateObj.getMonth();
 
       if (m !== lastMonth) {
@@ -123,131 +203,6 @@ export class Dashboard {
     });
   }
 
-  logout() {
-    localStorage.removeItem('lyf_logged');
-    this.router.navigate(['/login']);
-  }
-
-
-
-  // ---------------- ANALYTICS ----------------
-
-  refreshAnalytics() {
-    this.dailySummary = this.tracking.getDailySummary();
-    this.weeklySummary = this.tracking.getWeeklySummary();
-    this.monthlySummary = this.tracking.getMonthlySummary(
-      this.currentDate.substring(0, 7)
-    );
-
-  // Total hours
-    const values = Object.values(this.dailySummary) as number[];
-    this.dailyTotal = values.reduce((a, b) => a + b, 0);
-
-  // Top category
-    const sorted = Object.entries(this.dailySummary) as [string, number][];
-    sorted.sort((a, b) => b[1] - a[1]);
-    this.topDailyCategory = sorted.length ? sorted[0][0] : '';
-
-    // Weekly
-    const weeklyValues = Object.values(this.weeklySummary) as number[];
-    this.weeklyTotal = weeklyValues.reduce((a, b) => a + b, 0);
-
-    const weeklySorted = Object.entries(this.weeklySummary) as [string, number][];
-    weeklySorted.sort((a, b) => b[1] - a[1]);
-    this.topWeeklyCategory = weeklySorted.length ? weeklySorted[0][0] : '';
-
-    // Monthly
-    const monthlyValues = Object.values(this.monthlySummary) as number[];
-    this.monthlyTotal = monthlyValues.reduce((a, b) => a + b, 0);
-
-    const monthlySorted = Object.entries(this.monthlySummary) as [string, number][];
-    monthlySorted.sort((a, b) => b[1] - a[1]);
-    this.topMonthlyCategory = monthlySorted.length ? monthlySorted[0][0] : '';
-
-    this.calculateStreak();
-    this.generateYearGrid();
-  }
-
-  // ---------------- CHART MODAL ----------------
-
-  openChart(mode: 'daily' | 'weekly' | 'monthly') {
-    this.chartMode = mode;
-    this.showChart = true;
-
-    setTimeout(() => {
-      this.renderChart();
-    }, 0);
-  }
-
-  closeChart() {
-    this.showChart = false;
-
-    if (this.chart) {
-      this.chart.destroy();
-      this.chart = null;
-    }
-  }
-
-  calculateStreak() {
-    const days = this.tracking.getAllDays();
-
-    if (!days || days.length === 0) {
-      this.currentStreak = 0;
-      this.longestStreak = 0;
-      return;
-    }
-
-    let streak = 0;
-    let longest = 0;
-
-    const sorted = [...days].sort((a, b) =>
-      a.date.localeCompare(b.date)
-    );
-
-    for (const day of sorted) {
-      const hasData = day.hours.some(h => h.category !== null);
-
-      if (hasData) {
-        streak++;
-        longest = Math.max(longest, streak);
-      } else {
-        streak = 0;
-      }
-    }
-
-    this.currentStreak = streak;
-    this.longestStreak = longest;
-  }
-
-  generateYearGrid() {
-    const days = this.tracking.getAllDays();
-
-    const map = new Map<string, number>();
-
-    for (const day of days) {
-      const total = day.hours.filter(h => h.category).length;
-      map.set(day.date, total);
-    }
-
-    const year = new Date().getFullYear();
-    const start = new Date(year, 0, 1);
-    const end = new Date(year, 11, 31);
-
-    const grid: any[] = [];
-
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const key = d.toISOString().split('T')[0];
-
-      grid.push({
-        date: key,
-        total: map.get(key) || 0
-      });
-    }
-
-    this.yearGrid = grid;
-    this.generateMonthPositions();
-  }
-
   jumpToDate(date: string) {
     this.tracking.changeDay(date);
     this.currentDate = date;
@@ -255,14 +210,16 @@ export class Dashboard {
     this.refreshAnalytics();
 
     setTimeout(() => {
-      this.hourGrid.nativeElement.scrollIntoView({
+      this.hourGrid?.nativeElement.scrollIntoView({
         behavior: 'smooth',
         block: 'start'
       });
     }, 100);
   }
 
-  showTooltip(event: MouseEvent, d: any) {
+  // ---------------- TOOLTIP ----------------
+
+  showTooltip(event: MouseEvent, d: { date: string; total: number }) {
     this.tooltipVisible = true;
     this.tooltipX = event.pageX + 10;
     this.tooltipY = event.pageY + 10;
@@ -274,46 +231,51 @@ export class Dashboard {
     this.tooltipVisible = false;
   }
 
+  // ---------------- CHART ----------------
+
+  openChart(mode: 'daily' | 'weekly' | 'monthly') {
+    this.chartMode = mode;
+    this.showChart = true;
+
+    setTimeout(() => this.renderChart(), 0);
+  }
+
+  closeChart() {
+    this.showChart = false;
+    this.chart?.destroy();
+    this.chart = null;
+  }
 
   renderChart() {
-    let dataSource: any = {};
-
-    if (this.chartMode === 'daily') {
-      dataSource = this.dailySummary;
-    } else if (this.chartMode === 'weekly') {
-      dataSource = this.weeklySummary;
-    } else {
-      dataSource = this.monthlySummary;
-    }
+    const dataSource =
+      this.chartMode === 'daily'
+        ? this.dailySummary
+        : this.chartMode === 'weekly'
+        ? this.weeklySummary
+        : this.monthlySummary;
 
     const labels = Object.keys(dataSource);
-    const values = Object.values(dataSource);
+    const values = Object.values(dataSource).map(v => Number(v));
 
-    if (this.chart) {
-      this.chart.destroy();
-    }
+    this.chart?.destroy();
 
     this.chart = new Chart('dailyChart', {
       type: 'pie',
       data: {
         labels,
-        datasets: [
-          {
-            data: values,
-            backgroundColor: labels.map(l =>
-              this.categories.find(c => c.name === l)?.color || '#999'
-            )
-          }
-        ]
+        datasets: [{
+          data: values,
+          backgroundColor: labels.map(
+            l => this.categories.find(c => c.name === l)?.color || '#777'
+          )
+        }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            labels: {
-              color: 'white'
-            }
+            labels: { color: 'white' }
           }
         }
       }

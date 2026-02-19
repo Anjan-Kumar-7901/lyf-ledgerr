@@ -23,9 +23,7 @@ export class Tracking {
     this.loadDay(this.currentDate);
   }
 
-  // ----------------------
-  // BASIC HELPERS
-  // ----------------------
+  // ---------------- BASIC HELPERS ----------------
 
   private getToday(): string {
     return new Date().toISOString().split('T')[0];
@@ -38,9 +36,7 @@ export class Tracking {
     }));
   }
 
-  // ----------------------
-  // DAY MANAGEMENT
-  // ----------------------
+  // ---------------- DAY MANAGEMENT ----------------
 
   private loadDay(date: string) {
     let day = this.days.find(d => d.date === date);
@@ -64,17 +60,15 @@ export class Tracking {
     return this.currentDate;
   }
 
-  getHours(): HourLog[] {
-    return this.days.find(d => d.date === this.currentDate)?.hours || [];
-  }
-
-  getAllDays() {
+  getDays(): DayLog[] {
     return this.days;
   }
 
-  // ----------------------
-  // CATEGORY
-  // ----------------------
+  getHours(): HourLog[] {
+    return this.days.find(d => d.date === this.currentDate)!.hours;
+  }
+
+  // ---------------- CATEGORY ----------------
 
   getCategories(): Category[] {
     return this.categories;
@@ -84,12 +78,10 @@ export class Tracking {
     hour.category = category;
   }
 
-  // ----------------------
-  // DAILY ANALYTICS
-  // ----------------------
+  // ---------------- DAILY SUMMARY ----------------
 
   getDailySummary() {
-    const summary: any = {};
+    const summary: Record<string, number> = {};
     const day = this.days.find(d => d.date === this.currentDate);
 
     if (!day) return summary;
@@ -104,12 +96,10 @@ export class Tracking {
     return summary;
   }
 
-  // ----------------------
-  // WEEKLY ANALYTICS
-  // ----------------------
+  // ---------------- WEEKLY SUMMARY ----------------
 
   getWeeklySummary() {
-    const summary: any = {};
+    const summary: Record<string, number> = {};
 
     for (const day of this.days) {
       for (const hour of day.hours) {
@@ -123,12 +113,10 @@ export class Tracking {
     return summary;
   }
 
-  // ----------------------
-  // MONTHLY ANALYTICS
-  // ----------------------
+  // ---------------- MONTHLY SUMMARY ----------------
 
   getMonthlySummary(month: string) {
-    const summary: any = {};
+    const summary: Record<string, number> = {};
 
     for (const day of this.days) {
       if (!day.date.startsWith(month)) continue;
@@ -144,12 +132,10 @@ export class Tracking {
     return summary;
   }
 
-  // ----------------------
-  // YEARLY ANALYTICS
-  // ----------------------
+  // ---------------- YEARLY SUMMARY ----------------
 
   getYearlySummary() {
-    const summary: any = {};
+    const summary: Record<string, number> = {};
 
     for (const day of this.days) {
       for (const hour of day.hours) {
@@ -163,30 +149,27 @@ export class Tracking {
     return summary;
   }
 
+  // ---------------- STREAK ----------------
 
+  getStreakData() {
+    let current = 0;
+    let max = 0;
 
-  // ----------------------
-  // CATEGORY TREND
-  // ----------------------
+    const sorted = [...this.days].sort((a, b) =>
+      a.date.localeCompare(b.date)
+    );
 
-  getCategoryTrend(category: string) {
-    const trend: any[] = [];
+    for (const day of sorted) {
+      const hasData = day.hours.some(h => h.category !== null);
 
-    for (const day of this.days) {
-      let count = 0;
-
-      for (const hour of day.hours) {
-        if (hour.category?.name === category) {
-          count++;
-        }
+      if (hasData) {
+        current++;
+        max = Math.max(max, current);
+      } else {
+        current = 0;
       }
-
-      trend.push({
-        date: day.date,
-        hours: count
-      });
     }
 
-    return trend;
+    return { current, max };
   }
 }

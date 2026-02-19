@@ -15,9 +15,33 @@
       />
     </div>
 
-    <button class="logout-btn" (click)="logout()">Logout</button>
-
   </div>
+
+  <!-- PROFILE POP-OVER COMPONENT-->
+
+  <div class="profile-wrapper">
+    <button class="profile-btn" (click)="toggleProfile()">👤</button>
+  </div>
+
+
+  <div class="profile-popover" *ngIf="showProfile">
+    <img src="assets/avatar.png" class="avatar" />
+
+    <h3>John Doe</h3>
+    <p class="email">JohnDoe@gmail.com</p>
+
+    <div class="stats">
+      <span>Total Hours: {{ totalHours }}</span>
+      <span>Streak: {{ currentStreak }}</span>
+    </div>
+
+    <div class="actions">
+      <button> Profile </button>
+      <button> Settings </button>
+      <button (click)="logout()"> Logout </button>
+    </div>
+  </div>
+
 
   <!-- YEAR WRAPPED BUTTON -->
   <div class="year-btn-wrapper">
