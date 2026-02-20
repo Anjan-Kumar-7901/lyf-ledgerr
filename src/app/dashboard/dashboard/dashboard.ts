@@ -37,16 +37,9 @@ export class Dashboard {
   topDailyCategory = '';
   topWeeklyCategory = '';
   topMonthlyCategory = '';
-
-  totalHours = 0;
-
-  // ----------- STREAK -----------
-  currentStreak = 0;
-  longestStreak = 0;
-
-  // ----------- YEAR GRID / HEATMAP -----------
-  yearGrid: { date: string; total: number }[] = [];
-  monthPositions: { name: string; index: number }[] = [];
+  chart: any;
+  chartMode: 'daily' | 'weekly' | 'monthly' = 'daily';
+  monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   // ----------- UI STATE -----------
   chart: Chart | null = null;
@@ -60,6 +53,11 @@ export class Dashboard {
   tooltipY = 0;
   tooltipDate = '';
   tooltipHours = 0;
+
+  yearMonths: {
+    month: string;
+    days: { date: string; total: number }[];
+  }[] = [];
 
   @ViewChild('hourGrid') hourGrid!: ElementRef;
 
@@ -135,18 +133,12 @@ export class Dashboard {
     this.monthlyTotal = Object.values(this.monthlySummary)
       .reduce((a, b) => a + Number(b), 0);
 
-    this.topMonthlyCategory = this.getTopCategory(this.monthlySummary);
+    const monthlySorted = Object.entries(this.monthlySummary) as [string, number][];
+    monthlySorted.sort((a, b) => b[1] - a[1]);
+    this.topMonthlyCategory = monthlySorted.length ? monthlySorted[0][0] : '';
 
-    // Year
-    const yearly = this.tracking.getYearlySummary();
-    this.totalHours = Object.values(yearly)
-      .reduce((a, b) => a + Number(b), 0);
-
-    const streak = this.tracking.getStreakData();
-    this.currentStreak = streak.current;
-    this.longestStreak = streak.max;
-
-    this.generateYearGrid();
+    this.calculateStreak();
+    this.generateYearMonths();
   }
 
   private getTopCategory(summary: Record<string, number>): string {
@@ -158,8 +150,8 @@ export class Dashboard {
 
   // ---------------- YEAR GRID ----------------
 
-  generateYearGrid() {
-    const days: DayLog[] = this.tracking.getDays();
+  generateYearMonths() {
+    const days = this.tracking.getAllDays();
     const map = new Map<string, number>();
 
     for (const day of days) {
@@ -168,21 +160,57 @@ export class Dashboard {
     }
 
     const year = new Date().getFullYear();
-    const start = new Date(year, 0, 1);
-    const end = new Date(year, 11, 31);
+    this.yearMonths = [];
 
-    const grid: { date: string; total: number }[] = [];
+    for (let month = 0; month < 12; month++) {
 
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const key = d.toISOString().split('T')[0];
-      grid.push({
-        date: key,
-        total: map.get(key) || 0
+      const monthName = new Date(year, month)
+        .toLocaleString('default', { month: 'short' });
+
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      const monthDays = [];
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const key = this.formatDateLocal(date);
+
+        monthDays.push({
+          date: key,
+          total: map.get(key) || 0
+        });
+      }
+
+      this.yearMonths.push({
+        month: monthName,
+        days: monthDays
       });
     }
+  }
 
-    this.yearGrid = grid;
-    this.generateMonthPositions();
+  formatDateLocal(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  generateMonthPositions() {
+    this.monthPositions = [];
+    let lastMonth = -1;
+
+    this.yearGrid.forEach((d, i) => {
+      const dateObj = new Date(d.date);
+      const m = dateObj.getMonth();
+
+      if (m !== lastMonth) {
+        this.monthPositions.push({
+          name: dateObj.toLocaleString('default', { month: 'short' }),
+          index: i
+        });
+        lastMonth = m;
+      }
+    });
   }
 
   generateMonthPositions() {
