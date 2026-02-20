@@ -6,26 +6,32 @@ import Chart from 'chart.js/auto';
 import { Tracking } from '../../services/tracking';
 import { HourLog } from '../../models/hour-log.model';
 import { Category } from '../../models/category.model';
-import { DayLog } from '../../models/day-log.model';
 import { ProfileDropdown } from '../../shared/profile-dropdown/profile-dropdown';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, ProfileDropdown],
+  imports: [CommonModule, RouterModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
 export class Dashboard {
 
+  // ----------- CORE DATA -----------
+
   hours: HourLog[] = [];
   categories: Category[] = [];
-
   selectedHour: HourLog | null = null;
-
   currentDate = '';
 
+  // ----------- STREAK + TOTAL -----------
+
+  currentStreak = 0;
+  longestStreak = 0;
+  totalHours = 0;
+
   // ----------- SUMMARY DATA -----------
+
   dailySummary: Record<string, number> = {};
   weeklySummary: Record<string, number> = {};
   monthlySummary: Record<string, number> = {};
@@ -37,22 +43,26 @@ export class Dashboard {
   topDailyCategory = '';
   topWeeklyCategory = '';
   topMonthlyCategory = '';
-  chart: any;
-  chartMode: 'daily' | 'weekly' | 'monthly' = 'daily';
-  monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  // ----------- UI STATE -----------
+  // ----------- CHART STATE -----------
+
   chart: Chart | null = null;
   chartMode: 'daily' | 'weekly' | 'monthly' = 'daily';
   showChart = false;
 
+  // ----------- PROFILE -----------
+
   showProfile = false;
+
+  // ----------- TOOLTIP -----------
 
   tooltipVisible = false;
   tooltipX = 0;
   tooltipY = 0;
   tooltipDate = '';
   tooltipHours = 0;
+
+  // ----------- YEAR MONTH GRID -----------
 
   yearMonths: {
     month: string;
@@ -117,28 +127,22 @@ export class Dashboard {
       this.currentDate.substring(0, 7)
     );
 
-    // Daily
-    this.dailyTotal = Object.values(this.dailySummary)
-      .reduce((a, b) => a + Number(b), 0);
+    this.dailyTotal = this.sumValues(this.dailySummary);
+    this.weeklyTotal = this.sumValues(this.weeklySummary);
+    this.monthlyTotal = this.sumValues(this.monthlySummary);
 
     this.topDailyCategory = this.getTopCategory(this.dailySummary);
-
-    // Weekly
-    this.weeklyTotal = Object.values(this.weeklySummary)
-      .reduce((a, b) => a + Number(b), 0);
-
     this.topWeeklyCategory = this.getTopCategory(this.weeklySummary);
+    this.topMonthlyCategory = this.getTopCategory(this.monthlySummary);
 
-    // Monthly
-    this.monthlyTotal = Object.values(this.monthlySummary)
-      .reduce((a, b) => a + Number(b), 0);
-
-    const monthlySorted = Object.entries(this.monthlySummary) as [string, number][];
-    monthlySorted.sort((a, b) => b[1] - a[1]);
-    this.topMonthlyCategory = monthlySorted.length ? monthlySorted[0][0] : '';
-
+    this.totalHours = this.sumValues(this.dailySummary);
     this.calculateStreak();
     this.generateYearMonths();
+  }
+
+  private sumValues(summary: Record<string, number>): number {
+    return Object.values(summary)
+      .reduce((a, b) => a + Number(b), 0);
   }
 
   private getTopCategory(summary: Record<string, number>): string {
@@ -148,14 +152,14 @@ export class Dashboard {
     return entries[0][0];
   }
 
-  // ---------------- YEAR GRID ----------------
+  // ---------------- YEAR MONTH GRID ----------------
 
   generateYearMonths() {
-    const days = this.tracking.getAllDays();
+    const days = this.tracking.getDays(); // <-- IMPORTANT FIX
     const map = new Map<string, number>();
 
     for (const day of days) {
-      const total = day.hours.filter((h: HourLog) => h.category !== null).length;
+      const total = day.hours.filter(h => h.category !== null).length;
       map.set(day.date, total);
     }
 
@@ -168,7 +172,6 @@ export class Dashboard {
         .toLocaleString('default', { month: 'short' });
 
       const daysInMonth = new Date(year, month + 1, 0).getDate();
-
       const monthDays = [];
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -188,47 +191,11 @@ export class Dashboard {
     }
   }
 
-  formatDateLocal(date: Date): string {
+  private formatDateLocal(date: Date): string {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
     return `${year}-${month}-${day}`;
-  }
-
-  generateMonthPositions() {
-    this.monthPositions = [];
-    let lastMonth = -1;
-
-    this.yearGrid.forEach((d, i) => {
-      const dateObj = new Date(d.date);
-      const m = dateObj.getMonth();
-
-      if (m !== lastMonth) {
-        this.monthPositions.push({
-          name: dateObj.toLocaleString('default', { month: 'short' }),
-          index: i
-        });
-        lastMonth = m;
-      }
-    });
-  }
-
-  generateMonthPositions() {
-    this.monthPositions = [];
-    let lastMonth = -1;
-
-    this.yearGrid.forEach((d, i) => {
-      const dateObj = new Date(d.date);
-      const m = dateObj.getMonth();
-
-      if (m !== lastMonth) {
-        this.monthPositions.push({
-          name: dateObj.toLocaleString('default', { month: 'short' }),
-          index: i
-        });
-        lastMonth = m;
-      }
-    });
   }
 
   jumpToDate(date: string) {
@@ -259,12 +226,42 @@ export class Dashboard {
     this.tooltipVisible = false;
   }
 
+  private calculateStreak() {
+    const days = this.tracking.getDays();
+
+    if (!days || days.length === 0) {
+      this.currentStreak = 0;
+      this.longestStreak = 0;
+      return;
+    }
+
+    let streak = 0;
+    let longest = 0;
+
+    const sorted = [...days].sort((a, b) =>
+      a.date.localeCompare(b.date)
+    );
+
+    for (const day of sorted) {
+      const hasData = day.hours.some(h => h.category !== null);
+
+      if (hasData) {
+        streak++;
+        longest = Math.max(longest, streak);
+      } else {
+        streak = 0;
+      }
+    }
+
+    this.currentStreak = streak;
+    this.longestStreak = longest;
+  }
+
   // ---------------- CHART ----------------
 
   openChart(mode: 'daily' | 'weekly' | 'monthly') {
     this.chartMode = mode;
     this.showChart = true;
-
     setTimeout(() => this.renderChart(), 0);
   }
 
