@@ -125,32 +125,29 @@
   <div class="heatmap-wrapper">
     <h3 class="heatmap-title">Your Year in Pixels</h3>
 
-    <div class="month-row">
-      <span
-      *ngFor="let m of monthPositions"
-      [style.gridColumnStart]="m.index + 1"
-      >
-        {{ m.name }}
-      </span>
-    </div>
+    <div class="month-section" *ngFor="let m of yearMonths">
 
-    <div class="heatmap">
-      <div
-        class="heat-cell"
-        *ngFor="let d of yearGrid; let i = index"
-        (mouseenter)="showTooltip($event, d)"
-        (mouseleave)="hideTooltip()"
-        (click)="jumpToDate(d.date)"
-        [class.selected]="d.date === currentDate"
-        [ngClass]="{
-          'lvl-0': d.total === 0,
-          'lvl-1': d.total > 0 && d.total <= 2,
-          'lvl-2': d.total > 2 && d.total <= 5,
-          'lvl-3': d.total > 5
-        }"
-        [style.animationDelay]="(i * 3) + 'ms'"
-        title="{{ d.date }} : {{ d.total }} hrs"
-      ></div>
+      <div class="month-name">
+        {{ m.month }}
+      </div>
+
+      <div class="month-grid">
+        <div
+          class="heat-cell"
+          *ngFor="let d of m.days"
+          (mouseenter)="showTooltip($event, d)"
+          (mouseleave)="hideTooltip()"
+          (click)="jumpToDate(d.date)"
+          [class.selected]="d.date === currentDate"
+          [ngClass]="{
+            'lvl-0': d.total === 0,
+            'lvl-1': d.total > 0 && d.total <= 2,
+            'lvl-2': d.total > 2 && d.total <= 5,
+            'lvl-3': d.total > 5
+          }"
+        ></div>
+      </div>
+
     </div>
 
 

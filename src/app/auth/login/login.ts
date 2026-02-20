@@ -17,7 +17,9 @@ export class Login {
   password: string = '';
   error: string = '';
   loading = false;
-  showPassword = false;
+  showPassword: boolean = false;
+  strengthText: string = '';
+  strengthClass: string = '';
 
   constructor(private router: Router) {}
 
@@ -33,5 +35,24 @@ export class Login {
       localStorage.setItem('lyf_logged', 'true');
       this.router.navigate(['/dashboard']);
     },900);
+  }
+
+  togglePassword(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  checkPasswordStrength(): void {
+    const value = this.password || '';
+
+    if (value.length < 4) {
+      this.strengthText = 'Weak';
+      this.strengthClass = 'weak';
+    } else if (value.length < 8) {
+      this.strengthText = 'Medium';
+      this.strengthClass = 'medium';
+    } else {
+      this.strengthText = 'Strong';
+      this.strengthClass = 'strong';
+    }
   }
 }

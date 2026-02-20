@@ -40,7 +40,6 @@ export class Dashboard {
   chart: any;
   chartMode: 'daily' | 'weekly' | 'monthly' = 'daily';
   monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  monthPositions: { name: string; index: number }[] = [];
 
   selectedTrendCategory = '';
   weeklyChart: any;
@@ -51,7 +50,10 @@ export class Dashboard {
   tooltipDate = '';
   tooltipHours = 0;
 
-  yearGrid: { date: string; total: number }[] = [];
+  yearMonths: {
+    month: string;
+    days: { date: string; total: number }[];
+  }[] = [];
 
   @ViewChild('hourGrid') hourGrid!: ElementRef;
 
@@ -101,28 +103,6 @@ export class Dashboard {
     this.init();
   }
 
-  generateMonthPositions() {
-    this.monthPositions = [];
-
-    let lastMonth = -1;
-
-    this.yearGrid.forEach((d, i) => {
-      const dateObj = new Date(d.date);
-
-      if (dateObj.getFullYear() !== new Date().getFullYear()) return;
-
-      const m = dateObj.getMonth();
-
-      if (m !== lastMonth) {
-        this.monthPositions.push({
-          name: dateObj.toLocaleString('default', { month: 'short' }),
-          index: i
-        });
-        lastMonth = m;
-      }
-    });
-  }
-
   logout() {
     localStorage.removeItem('lyf_logged');
     this.router.navigate(['/login']);
@@ -165,7 +145,7 @@ export class Dashboard {
     this.topMonthlyCategory = monthlySorted.length ? monthlySorted[0][0] : '';
 
     this.calculateStreak();
-    this.generateYearGrid();
+    this.generateYearMonths();
   }
 
   // ---------------- CHART MODAL ----------------
@@ -219,9 +199,8 @@ export class Dashboard {
     this.longestStreak = longest;
   }
 
-  generateYearGrid() {
+  generateYearMonths() {
     const days = this.tracking.getAllDays();
-
     const map = new Map<string, number>();
 
     for (const day of days) {
@@ -230,22 +209,39 @@ export class Dashboard {
     }
 
     const year = new Date().getFullYear();
-    const start = new Date(year, 0, 1);
-    const end = new Date(year, 11, 31);
+    this.yearMonths = [];
 
-    const grid: any[] = [];
+    for (let month = 0; month < 12; month++) {
 
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const key = d.toISOString().split('T')[0];
+      const monthName = new Date(year, month)
+        .toLocaleString('default', { month: 'short' });
 
-      grid.push({
-        date: key,
-        total: map.get(key) || 0
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      const monthDays = [];
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const key = this.formatDateLocal(date);
+
+        monthDays.push({
+          date: key,
+          total: map.get(key) || 0
+        });
+      }
+
+      this.yearMonths.push({
+        month: monthName,
+        days: monthDays
       });
     }
+  }
 
-    this.yearGrid = grid;
-    this.generateMonthPositions();
+  formatDateLocal(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   jumpToDate(date: string) {
@@ -273,7 +269,6 @@ export class Dashboard {
   hideTooltip() {
     this.tooltipVisible = false;
   }
-
 
   renderChart() {
     let dataSource: any = {};

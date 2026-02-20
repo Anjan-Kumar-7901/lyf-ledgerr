@@ -31,34 +31,6 @@
   gap: 15px;
 }
 
-input {
-  background: black;
-  border: 1px solid #333;
-  padding: 12px;
-  color: white;
-  border-radius: 6px;
-  outline: none;
-  font-family: inherit;
-
-  &:focus {
-    border-color: #9b6cff;
-    box-shadow: 0 0 10px #9b6cff;
-  }
-}
-
-.password-box {
-  position: relative;
-
-  .toggle {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.8rem;
-    color: #9b6cff;
-    cursor: pointer;
-  }
-}
 
 .loader {
   width: 20px;
@@ -95,4 +67,144 @@ button {
   color: #ff4f6d;
   font-size: 0.85rem;
   text-align: center;
+}
+
+/* Common input styling for both email & password */
+.login-card input {
+  width: 100%;
+  padding: 12px 14px;
+  background: #000;
+  border: 1px solid #9b6cff;
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  margin-top: 15px;
+}
+
+.login-card input:focus {
+  box-shadow: 0 0 12px #9b6cff;
+}
+
+/* Password wrapper */
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Add extra right padding only for password */
+.password-wrapper input {
+  padding-right: 45px;
+}
+
+/* Toggle icon styling */
+.toggle-icon {
+  position: absolute;
+  right: 15px;
+  top: 60%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #9b6cff;
+  font-size: 20px;
+  user-select: none;
+}
+
+.toggle-icon:hover {
+  color: #ffffff;
+}
+
+/* Floating Input Wrapper */
+.input-wrapper {
+  position: relative;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding: 14px 14px;
+  background: #000;
+  border: 1px solid #9b6cff;
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: 0.3s ease;
+}
+
+/* Subtle focus animation */
+.input-wrapper input:focus {
+  box-shadow: 0 0 15px #9b6cff;
+  transform: scale(1.02);
+}
+
+/* Floating label */
+.input-wrapper label {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+  font-size: 14px;
+  pointer-events: none;
+  transition: 0.3s ease;
+  background: #0e0e0e;
+  padding: 0 5px;
+}
+
+/* Float when active */
+.input-wrapper input:focus + label,
+.input-wrapper input:not(:placeholder-shown) + label,
+.input-wrapper input:not([value=""]) + label {
+  top: 0;
+  font-size: 12px;
+  color: #9b6cff;
+}
+
+/* Password wrapper adjustment */
+.password-wrapper input {
+  padding-right: 45px;
+}
+
+/* Strength Indicator */
+.strength-indicator {
+  margin-top: 8px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.strength-bar {
+  width: 60px;
+  height: 5px;
+  border-radius: 5px;
+}
+
+.weak {
+  background: #ff4f6d;
+}
+
+.medium {
+  background: #ffa500;
+}
+
+.strong {
+  background: #39ff14;
+}
+
+/* Forgot password styling */
+.login-card p {
+  margin-top: 10px;
+  color: #9b6cff;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.login-card p:hover {
+  text-shadow: 0 0 8px #9b6cff;
 }

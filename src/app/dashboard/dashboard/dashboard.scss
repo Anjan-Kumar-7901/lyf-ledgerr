@@ -203,34 +203,39 @@ button:hover {
 
 .heatmap-wrapper {
   margin-top: 40px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 40px 60px;
 }
 
 .heatmap-title {
+  grid-column: 1 / -1;
   margin-bottom: 10px;
   color: #9b6cff;
   font-size: 14px;
   text-align: center;
 }
 
-.month-row {
-  display: grid;
-  grid-template-columns: repeat(53, 1fr);
-  gap: 4px;
-  font-size: 11px;
-  color: #777;
-  margin-bottom: 6px;
+.month-section {
+  display: flex;
+  flex-direction: column;
 }
 
-.heatmap {
+.month-name {
+  color: #9b6cff;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.month-grid {
   display: grid;
-  grid-template-columns: repeat(53, 1fr);
+  grid-template-columns: repeat(7, 14px);
   gap: 4px;
-  justify-content: center;
 }
 
 .heat-cell {
-  width: 10px;
-  height: 10px;
+  width: 14px;
+  height: 14px;
   border-radius: 2px;
   background: #111;
   transition: 0.3s;
@@ -271,6 +276,7 @@ button:hover {
 /* LEGEND */
 
 .heatmap-legend {
+  grid-column: 1 / -1;
   display: flex;
   justify-content: center;
   align-items: center;
