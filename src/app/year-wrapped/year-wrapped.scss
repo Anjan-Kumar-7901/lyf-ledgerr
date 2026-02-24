@@ -84,3 +84,24 @@
   opacity: 0.6;
 }
 
+.year-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 25px;
+  margin-bottom: 40px;
+}
+
+.primary-btn {
+  background: linear-gradient(145deg, #9b6cff, #b28cff);
+  color: black;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-family: 'JetBrains Mono';
+  cursor: pointer;
+  box-shadow: 0 0 10px #9b6cff;
+  transition: 0.2s ease;
+}
