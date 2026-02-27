@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -21,21 +22,24 @@ export class Login {
   strengthText: string = '';
   strengthClass: string = '';
 
-  constructor(private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
-  login() {
-      if (!this.email || !this.password) {
-        this.error = 'Please enter credentials';
-        return;
+login() {
+  this.authService.login(this.email, this.password)
+    .subscribe({
+      next: (res) => {
+        localStorage.setItem('token', res.token);
+        this.router.navigate(['/dashboard']);
+      },
+      error: (err) => {
+        alert('Invalid credentials');
+        console.error(err);
       }
-
-      this.loading = true;
-
-      setTimeout(() => {
-      localStorage.setItem('lyf_logged', 'true');
-      this.router.navigate(['/dashboard']);
-    },900);
-  }
+    });
+}
 
   togglePassword(): void {
     this.showPassword = !this.showPassword;

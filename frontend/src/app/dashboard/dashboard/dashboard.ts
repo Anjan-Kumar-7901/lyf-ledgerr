@@ -7,6 +7,7 @@ import { Tracking } from '../../services/tracking';
 import { HourLog } from '../../models/hour-log.model';
 import { Category } from '../../models/category.model';
 import { ProfileDropdown } from '../../shared/profile-dropdown/profile-dropdown';
+import { DaysService } from '../../services/days.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -72,20 +73,32 @@ export class Dashboard {
   @ViewChild('hourGrid') hourGrid!: ElementRef;
 
   constructor(
-    private tracking: Tracking,
-    private router: Router
-  ) {
-    this.init();
-  }
+  private tracking: Tracking,
+  private daysServices: DaysService,
+  private router: Router
+) {}
 
-  // ---------------- INIT ----------------
+// ---------------- INIT ----------------
 
-  init() {
-    this.hours = this.tracking.getHours();
-    this.categories = this.tracking.getCategories();
-    this.currentDate = this.tracking.getCurrentDate();
-    this.refreshAnalytics();
-  }
+ngOnInit() {
+  this.loadFromBackend();
+}
+
+// ---------------- BACKEND LOADER ----------------
+
+private loadFromBackend() {
+  this.daysServices.getDays().subscribe({
+    next: (data: any[]) => {
+      console.log('Backend Days:', data);
+
+      // For now we just log the response.
+      // Next step we will map this data to hours, categories, analytics.
+    },
+    error: (err: any) => {
+      console.error('Backend error:', err);
+    }
+  });
+}
 
   // ---------------- UI ----------------
 
@@ -106,7 +119,7 @@ export class Dashboard {
     if (!input.value) return;
 
     this.tracking.changeDay(input.value);
-    this.init();
+    this.ngOnInit();
   }
 
   toggleProfile() {
