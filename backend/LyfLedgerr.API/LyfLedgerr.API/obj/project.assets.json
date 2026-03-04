@@ -4212,23 +4212,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\DELL\\.nuget\\packages\\": {},
+    "C:\\Users\\sreeanjani.vellanki\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Lyf Ledgerr\\lyf-ledgerr-BE\\LyfLedgerr.API\\LyfLedgerr.API\\LyfLedgerr.API.csproj",
+      "projectUniqueName": "C:\\Users\\sreeanjani.vellanki\\OneDrive - Qentelli\\Desktop\\Lyf Ledgerr\\lyf-ledgerr\\backend\\LyfLedgerr.API\\LyfLedgerr.API\\LyfLedgerr.API.csproj",
       "projectName": "LyfLedgerr.API",
-      "projectPath": "D:\\Lyf Ledgerr\\lyf-ledgerr-BE\\LyfLedgerr.API\\LyfLedgerr.API\\LyfLedgerr.API.csproj",
-      "packagesPath": "C:\\Users\\DELL\\.nuget\\packages\\",
-      "outputPath": "D:\\Lyf Ledgerr\\lyf-ledgerr-BE\\LyfLedgerr.API\\LyfLedgerr.API\\obj\\",
+      "projectPath": "C:\\Users\\sreeanjani.vellanki\\OneDrive - Qentelli\\Desktop\\Lyf Ledgerr\\lyf-ledgerr\\backend\\LyfLedgerr.API\\LyfLedgerr.API\\LyfLedgerr.API.csproj",
+      "packagesPath": "C:\\Users\\sreeanjani.vellanki\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\sreeanjani.vellanki\\OneDrive - Qentelli\\Desktop\\Lyf Ledgerr\\lyf-ledgerr\\backend\\LyfLedgerr.API\\LyfLedgerr.API\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\DELL\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\sreeanjani.vellanki\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -4256,7 +4256,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "10.0.100"
+      "SdkAnalysisLevel": "10.0.200"
     },
     "frameworks": {
       "net8.0": {
@@ -4308,7 +4308,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.200-preview.0.26103.119/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

@@ -6,7 +6,7 @@ import { Injectable } from '@angular/core';
 })
 export class DaysService {
 
-  private apiUrl = 'https://localhost:7035/api/Days';
+  private apiUrl = 'http://localhost:5130/api/Days';
 
   constructor(private http: HttpClient) {}
 

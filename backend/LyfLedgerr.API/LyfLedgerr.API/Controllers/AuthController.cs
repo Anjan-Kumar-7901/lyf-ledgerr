@@ -58,10 +58,8 @@ public class AuthController : ControllerBase
 
     private string GenerateJwtToken(User user)
     {
-        var jwtSettings = _configuration.GetSection("JwtSettings");
-
         var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!)
+           Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]!)
         );
 
         var credentials = new SigningCredentials(
@@ -71,17 +69,15 @@ public class AuthController : ControllerBase
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email)
-        };
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Email, user.Email)
+    };
 
         var token = new JwtSecurityToken(
-            issuer: jwtSettings["Issuer"],
-            audience: jwtSettings["Audience"],
+            issuer: "LyfLedgerrAPI",
+            audience: "LyfLedgerrClient",
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(
-                Convert.ToDouble(jwtSettings["ExpiryMinutes"])
-            ),
+            expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: credentials
         );
 

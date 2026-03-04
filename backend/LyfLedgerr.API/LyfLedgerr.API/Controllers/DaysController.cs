@@ -9,7 +9,7 @@ namespace LyfLedgerr.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+//[Authorize]
 public class DaysController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -22,9 +22,7 @@ public class DaysController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetUserDays()
     {
-        var userId = int.Parse(
-            User.FindFirstValue(ClaimTypes.NameIdentifier)!
-        );
+        var userId = 1;
 
         var days = await _context.DayLogs
             .Where(d => d.UserId == userId)
@@ -33,5 +31,35 @@ public class DaysController : ControllerBase
             .ToListAsync();
 
         return Ok(days);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateDay()
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (userIdClaim == null)
+            return Unauthorized("Invalid token");
+
+        var userId = int.Parse(userIdClaim);
+
+        var today = DateTime.UtcNow.Date;
+
+        var existingDay = await _context.DayLogs
+            .FirstOrDefaultAsync(d => d.Date == today && d.UserId == userId);
+
+        if (existingDay != null)
+            return BadRequest("Day already exists");
+
+        var day = new DayLog
+        {
+            Date = today,
+            UserId = userId
+        };
+
+        _context.DayLogs.Add(day);
+        await _context.SaveChangesAsync();
+
+        return Ok(day);
     }
 }

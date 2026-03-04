@@ -67,6 +67,22 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine("JWT FAILED: " + context.Exception.Message);
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine("JWT VALIDATED SUCCESSFULLY");
+            return Task.CompletedTask;
+        }
+    };
+
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = false,
@@ -74,8 +90,8 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = false,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(
-        Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!)
-    )
+            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]!)
+        )
     };
 });
 
@@ -102,7 +118,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseCors("AllowAngular");
 
